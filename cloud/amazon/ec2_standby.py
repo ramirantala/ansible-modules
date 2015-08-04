@@ -1,4 +1,58 @@
 #!/usr/bin/python
+DOCUMENTATION = '''
+---
+module: ec2_standby
+short_description: entere or exit instance to standby in EC2 autoscaling group
+description:
+    - This module enters or exits instances to standby in AWS EC2 autoscaling group
+version_added: 1.9
+options:
+  instance_ids:
+    description:
+      - The EC2 instance ids
+    required: true
+  name:
+    description:
+      - The name of the autoscaling group for instances
+    required: true
+  state:
+    description:
+      - If standby, listed instances will be put in to Standby
+      - If inservice, listed instances will be put in to InService
+    required: true
+    choices: ['standby', 'inservice']
+  should_decrement:
+    description:
+      - the EC2 region to use
+    required: false
+    default: True
+    aliases: [ ec2_region ]
+  in_vpc:
+    description:
+      - allocate an EIP inside a VPC or not
+    required: false
+    default: false
+    version_added: "1.4"
+
+extends_documentation_fragment: aws
+author: Rami Rantala<rami.rantala74@gmail.com>
+notes:
+   - Currently this module uses aws cli for action. Python bot does not support enter or exit-standby
+'''
+EXAMPLES = '''
+- name: add instance to standby
+  ec2_standby: instance_ids=i-1212f003 name=default-asg-group should_decrement=yes state=standby
+
+- name: remove instance to standby
+  ec2_standby: instance_ids=i-1212f003 name=default-asg-group state=inservice
+
+- name: add instance to standby by using ansible variables
+  ec2_standby: instance_ids={{ ec2_id }} name=default-asg-group state=standby
+
+- name: add several instanceis to standby by using ansible variables
+  ec2_standby: instance_ids=i-1212ff01,i-123fght1 name=default-asg-group state=standby
+
+'''
 
 
 def get_instances_for_change(asg_name, instance_ids, state):
