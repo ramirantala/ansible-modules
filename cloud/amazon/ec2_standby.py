@@ -35,7 +35,7 @@ options:
     version_added: "1.4"
 
 extends_documentation_fragment: aws
-author: Rami Rantala<rami.rantala74@gmail.com>
+author: Rami Rantala
 notes:
    - Currently this module uses aws cli for action. Python bot does not support enter or exit-standby
 '''
@@ -63,12 +63,8 @@ def get_instances_for_change(asg_name, instance_ids, state):
 	state="InService"
 
     instance_list = []
-    ec2 = boto.ec2.connect_to_region('eu-west-1')
     autoscale = boto.ec2.autoscale.connect_to_region('eu-west-1')
     group = autoscale.get_all_groups(names=[asg_name])[0]
-
-    #instance_ids = [i.instance_id for i in group.instances]
-    #instances = ec2.get_only_instances(instance_ids)
 
     instance_facts = {}
     for i in group.instances:
@@ -77,8 +73,6 @@ def get_instances_for_change(asg_name, instance_ids, state):
                                          'launch_config_name': i.launch_config_name }
         if i.lifecycle_state != state and i.instance_id in instance_ids:
 		instance_list.append(i.instance_id)
-	#	print i.lifecycle_state
-	#	print i.instance_id
 	else:
 		pass
     return instance_list
