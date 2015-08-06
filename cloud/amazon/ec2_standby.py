@@ -93,9 +93,16 @@ def enter_or_exit_standby(asg_name,instances,should_decrement,profile,state):
             cmd = "aws autoscaling enter-standby --instance-ids %s --auto-scaling-group-name %s %s %s" % ( instances_option, asg_name, decrement_option, profile_option )
     elif state == 'inservice':
             cmd = "aws autoscaling exit-standby --instance-ids %s --auto-scaling-group-name %s %s " % ( instances_option, asg_name, profile_option )
-    rc = os.system("%s" % cmd)
+    try:
+   	subp = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
+    except subprocess.CalledProcessError as exc:
+    	rc = exc.returncode
+	output = exc.output
+    else:
+	rc = 0
+	output = subp
    
-    return rc 
+    return rc,output 
 
 def main():
 
@@ -129,9 +136,9 @@ def main():
     if len(instances) == 0:
 		module.exit_json(changed=False)
     else:
-       rc=enter_or_exit_standby(asg_name,instances,should_decrement,profile,state)
+       rc, output=enter_or_exit_standby(asg_name,instances,should_decrement,profile,state)
        if rc != 0:
-          module.fail_json(msg="aws cli command failed")
+          module.fail_json(msg="aws cli command failed: %s" % output)
        else:
           module.exit_json(changed=True)
 
@@ -140,6 +147,7 @@ try:
     import boto.ec2.autoscale
     from boto.ec2.autoscale import AutoScaleConnection, AutoScalingGroup
     from boto.exception import BotoServerError
+    import subprocess
 except ImportError:
     boto_found = False
 else:
